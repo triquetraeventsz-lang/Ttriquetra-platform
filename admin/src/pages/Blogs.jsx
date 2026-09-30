@@ -1,0 +1,68 @@
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Plus } from 'lucide-react'
+import { useApi } from '../lib/useApi.js'
+import { Table } from '../components/Table.jsx'
+import { Badge } from '../components/Badge.jsx'
+
+export function Blogs() {
+  const [status, setStatus] = useState('')
+  const [search, setSearch] = useState('')
+  const navigate = useNavigate()
+  const query = new URLSearchParams({ limit: '50', ...(status && { status }), ...(search && { search }) })
+  const { data, loading, error } = useApi(`/api/admin/blogs?${query}`)
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-semibold text-ink-soft">Blogs</h1>
+          <p className="text-sm text-stone">Write, schedule and publish blog posts.</p>
+        </div>
+        <Link
+          to="/blogs/new"
+          className="flex items-center gap-1.5 rounded-lg bg-gold px-4 py-2 text-sm font-medium text-ink-soft hover:bg-gold-dark"
+        >
+          <Plus size={15} /> New post
+        </Link>
+      </div>
+
+      <div className="flex gap-3">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by title…"
+          className="rounded-lg border border-line bg-cream px-3 py-2 text-sm outline-none focus:border-gold"
+        />
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          className="rounded-lg border border-line bg-cream px-3 py-2 text-sm outline-none focus:border-gold"
+        >
+          <option value="">All statuses</option>
+          <option value="DRAFT">Draft</option>
+          <option value="SCHEDULED">Scheduled</option>
+          <option value="PUBLISHED">Published</option>
+          <option value="ARCHIVED">Archived</option>
+        </select>
+      </div>
+
+      {loading ? (
+        <p className="text-sm text-stone">Loading…</p>
+      ) : error ? (
+        <p className="text-sm text-red-600">{error.message}</p>
+      ) : (
+        <Table
+          rows={data.items}
+          onRowClick={(row) => navigate(`/blogs/${row._id}`)}
+          columns={[
+            { key: 'title', header: 'Title' },
+            { key: 'category', header: 'Category' },
+            { key: 'status', header: 'Status', render: (r) => <Badge>{r.status}</Badge> },
+            { key: 'updatedAt', header: 'Updated', render: (r) => new Date(r.updatedAt).toLocaleDateString() },
+          ]}
+        />
+      )}
+    </div>
+  )
+}

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://triquetraevents.co.in/sitemap.xml

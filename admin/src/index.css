@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+/* Same brand tokens as client/src/index.css, so the admin feels like part
+   of the same product — but the layout/components here are admin-shaped
+   (sidebar, tables, drawers), not the marketing component library. */
+@theme {
+  --font-display: "Fraunces", "Georgia", serif;
+  --font-sans: "Manrope", system-ui, -apple-system, sans-serif;
+
+  --color-gold: #f9bc21;
+  --color-gold-dark: #c9930d;
+  --color-gold-light: #ffd766;
+
+  --color-ink: #0a0a0a;
+  --color-ink-soft: #17140f;
+  --color-charcoal: #241f18;
+
+  --color-cream: #fbf8f2;
+  --color-paper: #f3ede0;
+  --color-stone: #6b6355;
+  --color-stone-dark: #443f34;
+  --color-line: #e4dcc8;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+.rich-text-editor .ProseMirror h2 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0.75rem 0 0.25rem;
+}
+
+.rich-text-editor .ProseMirror p {
+  margin: 0.5rem 0;
+}
+
+.rich-text-editor .ProseMirror ul,
+.rich-text-editor .ProseMirror ol {
+  padding-left: 1.25rem;
+  margin: 0.5rem 0;
+}
+
+.rich-text-editor .ProseMirror ul {
+  list-style: disc;
+}
+
+.rich-text-editor .ProseMirror ol {
+  list-style: decimal;
+}
+
+.rich-text-editor .ProseMirror blockquote {
+  border-left: 3px solid var(--color-gold);
+  padding-left: 0.75rem;
+  color: var(--color-stone-dark);
+  margin: 0.5rem 0;
+}
