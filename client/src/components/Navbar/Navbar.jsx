@@ -4,6 +4,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 import { ChevronDown, Menu, X } from 'lucide-react'
 import { navLinks } from '../../data/nav'
 import Button from '../Button/Button'
+import { lockScroll, unlockScroll } from '../../lib/scrollLock'
 
 export default function Navbar({ hasAnnouncement = false }) {
   const [scrolled, setScrolled] = useState(false)
@@ -26,12 +27,13 @@ export default function Navbar({ hasAnnouncement = false }) {
     setMobileServicesOpen(false)
   }, [location.pathname])
 
-  // Lock body scroll while mobile menu is open
+  // Lock body scroll while mobile menu is open. Reference-counted (see
+  // lib/scrollLock) so this can't incorrectly unlock scroll out from under
+  // another open overlay (e.g. ConcertPromoModal) that also wants it locked.
   useEffect(() => {
-    document.body.style.overflow = mobileOpen ? 'hidden' : ''
-    return () => {
-      document.body.style.overflow = ''
-    }
+    if (!mobileOpen) return
+    lockScroll()
+    return unlockScroll
   }, [mobileOpen])
 
   const isHome = location.pathname === '/'

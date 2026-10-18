@@ -16,12 +16,15 @@ import EventLanding from './pages/EventLanding'
 import NotFound from './pages/NotFound'
 import AnnouncementBar from './components/Announcement/AnnouncementBar'
 import AnnouncementModal from './components/Announcement/AnnouncementModal'
+import ConcertPromoModal from './components/ConcertPromo/ConcertPromoModal'
 import { useAnnouncement } from './hooks/useAnnouncement'
+import { useConcertPromo } from './hooks/useConcertPromo'
 import { FooterVisibilityProvider, useFooterVisibility } from './context/FooterVisibilityContext'
 
 function AppShell() {
   const { announcement, dismiss } = useAnnouncement()
   const { visible: footerVisible } = useFooterVisibility()
+  const concertPromo = useConcertPromo()
   const showBar = announcement?.displayType === 'bar'
 
   return (
@@ -29,6 +32,7 @@ function AppShell() {
       <ScrollToTop />
       {showBar && <AnnouncementBar announcement={announcement} onDismiss={dismiss} />}
       {announcement?.displayType === 'modal' && <AnnouncementModal announcement={announcement} onDismiss={dismiss} />}
+      <ConcertPromoModal open={concertPromo.open} onDismiss={concertPromo.dismiss} onConfirm={concertPromo.confirm} />
       <Navbar hasAnnouncement={showBar} />
       <main className="flex-1">
         <Routes>
