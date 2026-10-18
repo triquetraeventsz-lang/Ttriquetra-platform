@@ -1,3 +1,4 @@
+import dns from 'node:dns'
 import mongoose from 'mongoose'
 import { env } from './env.js'
 
@@ -11,6 +12,17 @@ let connected = false
  */
 export async function connectDB() {
   if (connected) return mongoose.connection
+
+  // Dev-only, opt-in (DEV_DNS_SERVERS) workaround for Node's default
+  // resolver refusing mongodb+srv:// SRV lookups on some Windows/VPN/router
+  // setups. Gated on !isProduction too, as a second guard — this must
+  // never run against a real deploy host, which should rely entirely on
+  // its own provider's DNS.
+  if (!env.isProduction && env.devDnsServers.length) {
+    dns.setServers(env.devDnsServers)
+    // eslint-disable-next-line no-console
+    console.log(`DEV_DNS_SERVERS override active: ${env.devDnsServers.join(', ')}`) // public resolver IPs, not secrets
+  }
 
   mongoose.connection.on('error', (err) => {
     // eslint-disable-next-line no-console

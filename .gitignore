@@ -7,6 +7,12 @@ dist-ssr
 .env
 .env.*
 !.env.example
+# Catches env/credential files regardless of prefix (e.g. a MongoDB Atlas
+# "atlas-credentials.env" export) — the exact gap that let one such file
+# sit untracked-but-unignored and servable by the dev server. Applies
+# anywhere in the repo, not just the root.
+*.env
+*credentials*
 
 # Editor / OS
 .vscode/*

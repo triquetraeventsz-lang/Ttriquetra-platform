@@ -80,8 +80,11 @@ npm run test -w server
 | `JWT_SECRET` | Yes | Any long random string. Generate one with `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`. |
 | `PORT` | No | Defaults to `5000`. |
 | `CLIENT_URL` / `ADMIN_URL` | No | Defaults to the local dev ports. In production, set these to your real deployed origins — CORS only allows credentialed requests from exactly these two. |
-| `NODE_ENV` | No | Defaults to `development`. |
+| `NODE_ENV` | **Yes, in production** | Defaults to `development`, which is fine locally. In production this must be exactly `production` — the admin auth cookie only gets its `Secure` flag when `NODE_ENV=production` (see `utils/jwt.js`); get this wrong and the session cookie travels over plain HTTP. |
+| `TRUST_PROXY_HOPS` | **Yes, in production** | Defaults to `0` (trust no proxy — correct for local dev, where there isn't one). Once deployed behind a real reverse-proxy host (Render/Railway/Fly), set this to `1`, or the IP-based rate limiters on login and the public lead form will throw on every request instead of working. If you ever add Cloudflare in front of that host too, it needs to be `2` instead. Never set this to `1`+ without a real proxy in front — doing so lets any client spoof `X-Forwarded-For` to dodge rate limiting entirely. |
 | `R2_ACCOUNT_ID` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_BUCKET` / `R2_PUBLIC_URL` | No | Only needed for the admin Media library's upload feature. Without them, uploads fail with a clear "not configured" error instead of a crash — everything else works fine. |
+
+**Keep all of the above in `server/.env` (or your host's secrets manager) only — never in `admin/` or `client/`, and never under a filename other than `.env`/`.env.*`.** Both dev servers correctly block requests for `.env`-pattern files; a differently-named file holding real credentials is not protected by that and will be served as a plain static file to anyone who requests it by name.
 
 ### `client/.env` and `admin/.env`
 

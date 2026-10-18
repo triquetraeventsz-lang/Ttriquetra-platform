@@ -110,6 +110,17 @@ export default function Navbar({ hasAnnouncement = false }) {
                   </div>
                 )}
               </li>
+            ) : item.href ? (
+              <li key={item.href}>
+                <a
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="py-2 text-sm font-semibold tracking-wide uppercase transition-colors hover:text-gold"
+                >
+                  {item.label}
+                </a>
+              </li>
             ) : (
               <li key={item.to}>
                 <NavLink
@@ -183,6 +194,17 @@ export default function Navbar({ hasAnnouncement = false }) {
                     ))}
                   </ul>
                 </div>
+              </li>
+            ) : item.href ? (
+              <li key={item.href} className="border-b border-line">
+                <a
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block py-4 text-base font-semibold uppercase"
+                >
+                  {item.label}
+                </a>
               </li>
             ) : (
               <li key={item.to} className="border-b border-line">

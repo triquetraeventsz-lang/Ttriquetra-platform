@@ -18,6 +18,9 @@ const env = {
   CLIENT_URL: 'http://localhost:5173',
   ADMIN_URL: 'http://localhost:5174',
   NODE_ENV: 'development',
+  // Simulates running behind one reverse-proxy hop (Render/Railway/Fly-style),
+  // so the X-Forwarded-For checks below actually exercise that code path.
+  TRUST_PROXY_HOPS: '1',
 }
 
 const server = spawn('node', ['src/server.js'], { env, stdio: ['ignore', 'pipe', 'pipe'] })
@@ -80,6 +83,22 @@ try {
   })
   const adminCookie = extractCookie(loginRes)
   check('ADMIN login succeeds and sets a cookie', loginRes.status === 200 && !!adminCookie, `status ${loginRes.status}`)
+
+  // With TRUST_PROXY_HOPS=1 set above, express-rate-limit should read the
+  // real client IP from X-Forwarded-For via Express's trust-proxy setting
+  // instead of throwing its "trust proxy" validation error — which is
+  // exactly what happens if this is deployed behind a real reverse proxy
+  // without that setting (see server.js).
+  const proxiedLoginRes = await fetch(`${base}/api/admin/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': '203.0.113.5' },
+    body: JSON.stringify({ email: 'admin@test.com', password: 'wrong-on-purpose' }),
+  })
+  check(
+    'Login behind a trusted proxy (X-Forwarded-For set) does not 500',
+    proxiedLoginRes.status === 401,
+    `got ${proxiedLoginRes.status}`,
+  )
 
   const wrongPassRes = await fetch(`${base}/api/admin/auth/login`, {
     method: 'POST',
@@ -231,6 +250,21 @@ try {
   const csvRes = await fetch(`${base}/api/admin/events/${event._id}/submissions/export.csv`, { headers: { Cookie: adminCookie } })
   const csvText = await csvRes.text()
   check('CSV export contains the lead', csvRes.status === 200 && csvText.includes('jane@example.com'), csvText.slice(0, 120))
+
+  // With TRUST_PROXY_HOPS=1 set above, this should behave normally instead
+  // of throwing express-rate-limit's "trust proxy" validation error — the
+  // exact crash that would happen on every request once deployed behind a
+  // real reverse proxy without that setting (see server.js).
+  const proxiedLeadRes = await fetch(`${base}/api/public/events/${event.slug}/leads`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': '203.0.113.7' },
+    body: JSON.stringify({ name: 'Proxied Jane', email: 'proxied-jane@example.com' }),
+  })
+  check(
+    'Lead submission behind a trusted proxy (X-Forwarded-For set) does not 500',
+    proxiedLeadRes.status === 201,
+    `got ${proxiedLeadRes.status}`,
+  )
 
   // 11. Validation rejects bad input
   const badEmailRes = await fetch(`${base}/api/admin/users`, {

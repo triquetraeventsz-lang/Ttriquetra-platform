@@ -13,6 +13,13 @@ async function main() {
 
   const app = express()
 
+  // Only set when a real reverse-proxy host is configured (TRUST_PROXY_HOPS
+  // > 0) — otherwise express-rate-limit's IP-based limiters (rateLimit.js)
+  // either see the proxy's IP for every request (rate-limiting everyone as
+  // one client) or, if a hop count is set without a real proxy in front,
+  // let any client spoof X-Forwarded-For to dodge the limit entirely.
+  if (env.trustProxyHops > 0) app.set('trust proxy', env.trustProxyHops)
+
   // Standard security headers. Defaults are fine here — this API only ever
   // serves JSON/CSV/XML, never HTML, so there's no page to write a CSP for.
   app.use(helmet())

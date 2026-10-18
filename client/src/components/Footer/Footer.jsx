@@ -68,13 +68,21 @@ export default function Footer() {
         <div>
           <h3 className="mb-4 text-xs font-semibold tracking-[0.2em] text-gold uppercase">Navigate</h3>
           <ul className="flex flex-col gap-3 text-sm text-cream/70">
-            {primaryLinks.map((item) => (
-              <li key={item.to}>
-                <Link to={item.to} className="link-underline hover:text-cream">
-                  {item.label}
-                </Link>
-              </li>
-            ))}
+            {primaryLinks.map((item) =>
+              item.href ? (
+                <li key={item.href}>
+                  <a href={item.href} target="_blank" rel="noopener noreferrer" className="link-underline hover:text-cream">
+                    {item.label}
+                  </a>
+                </li>
+              ) : (
+                <li key={item.to}>
+                  <Link to={item.to} className="link-underline hover:text-cream">
+                    {item.label}
+                  </Link>
+                </li>
+              ),
+            )}
           </ul>
         </div>
 
