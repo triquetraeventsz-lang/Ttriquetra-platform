@@ -14,8 +14,8 @@ export const navLinks = [
   { label: 'How We Work', to: '/how-we-work' },
   // External — the concert has its own separate, already-live site on this
   // subdomain; this is a plain outbound link, not an internal route. Must
-  // stay on the "concert." subdomain, not the bare corporate domain, or it
-  // just sends visitors back to this site's own homepage.
-  { label: 'Concert', href: 'https://concert.triquetraevents.co.in' },
+  // stay on the "concerts." subdomain (plural), not the bare corporate
+  // domain, or it just sends visitors back to this site's own homepage.
+  { label: 'Concert', href: 'https://concerts.triquetraevents.co.in/' },
   { label: 'Contact Us', to: '/contact' },
 ]
