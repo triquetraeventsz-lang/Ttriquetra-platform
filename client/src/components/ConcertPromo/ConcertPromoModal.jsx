@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { X } from 'lucide-react'
 import { lockScroll, unlockScroll } from '../../lib/scrollLock'
 
-const CONCERT_URL = 'https://concerts.triquetraevents.co.in'
+const CONCERT_URL = 'https://concert.triquetraevents.co.in'
 
 function getFocusable(container) {
   return Array.from(container?.querySelectorAll('button, a[href]') ?? [])

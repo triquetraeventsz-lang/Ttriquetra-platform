@@ -12,8 +12,10 @@ export const navLinks = [
     children: services.map((s) => ({ label: s.title, to: `/services/${s.slug}` })),
   },
   { label: 'How We Work', to: '/how-we-work' },
-  // External — the concert has its own separate, already-live site at this
-  // domain; this is a plain outbound link, not an internal route.
-  { label: 'Concert', href: 'https://triquetraevents.co.in' },
+  // External — the concert has its own separate, already-live site on this
+  // subdomain; this is a plain outbound link, not an internal route. Must
+  // stay on the "concert." subdomain, not the bare corporate domain, or it
+  // just sends visitors back to this site's own homepage.
+  { label: 'Concert', href: 'https://concert.triquetraevents.co.in' },
   { label: 'Contact Us', to: '/contact' },
 ]
