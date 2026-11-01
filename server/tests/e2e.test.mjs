@@ -181,6 +181,134 @@ try {
   const dupService = await dupServiceRes.json()
   check('Duplicate name gets a unique slug (not the same as the first)', dupService.slug !== createdService.slug, dupService.slug)
 
+  // 8b. Service creation rejects an empty/missing name
+  const noNameRes = await fetch(`${base}/api/admin/services`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Cookie: adminCookie },
+    body: JSON.stringify({ name: '' }),
+  })
+  check('Creating a Service with an empty name is rejected by validation', noNameRes.status === 400, `got ${noNameRes.status}`)
+
+  // 8c. DELETE /api/admin/services/:id — authorization + referential integrity
+  const serviceToDelete = await fetch(`${base}/api/admin/services`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Cookie: adminCookie },
+    body: JSON.stringify({ name: 'Deletable Service' }),
+  }).then((r) => r.json())
+
+  const deleteAsEditorRes = await fetch(`${base}/api/admin/services/${serviceToDelete._id}`, {
+    method: 'DELETE',
+    headers: { Cookie: editorCookie },
+  })
+  check('EDITOR deleting a Service -> 403', deleteAsEditorRes.status === 403, `got ${deleteAsEditorRes.status}`)
+
+  const referencingCaseStudy = await fetch(`${base}/api/admin/case-studies`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Cookie: adminCookie },
+    body: JSON.stringify({ title: 'Referencing Case Study', services: [serviceToDelete._id] }),
+  }).then((r) => r.json())
+
+  const deleteReferencedRes = await fetch(`${base}/api/admin/services/${serviceToDelete._id}`, {
+    method: 'DELETE',
+    headers: { Cookie: adminCookie },
+  })
+  const deleteReferencedBody = await deleteReferencedRes.json().catch(() => ({}))
+  check(
+    'ADMIN deleting a service referenced by a CaseStudy is blocked (409)',
+    deleteReferencedRes.status === 409 && deleteReferencedBody.error?.includes('Referencing Case Study'),
+    JSON.stringify(deleteReferencedBody),
+  )
+
+  // Remove the reference, confirm deletion now succeeds
+  await fetch(`${base}/api/admin/case-studies/${referencingCaseStudy._id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Cookie: adminCookie },
+    body: JSON.stringify({ services: [] }),
+  })
+  const deleteUnreferencedRes = await fetch(`${base}/api/admin/services/${serviceToDelete._id}`, {
+    method: 'DELETE',
+    headers: { Cookie: adminCookie },
+  })
+  check('ADMIN deleting an unreferenced Service -> 204', deleteUnreferencedRes.status === 204, `got ${deleteUnreferencedRes.status}`)
+
+  const getDeletedRes = await fetch(`${base}/api/admin/services/${serviceToDelete._id}`, { headers: { Cookie: adminCookie } })
+  check('Deleted service no longer retrievable via admin API (404)', getDeletedRes.status === 404, `got ${getDeletedRes.status}`)
+
+  const deleteAgainRes = await fetch(`${base}/api/admin/services/${serviceToDelete._id}`, {
+    method: 'DELETE',
+    headers: { Cookie: adminCookie },
+  })
+  check('Repeating the same delete request -> 404, not a crash', deleteAgainRes.status === 404, `got ${deleteAgainRes.status}`)
+
+  // A published-then-deleted service must disappear from the public API too
+  const pubServiceForDelete = await fetch(`${base}/api/admin/services`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Cookie: adminCookie },
+    body: JSON.stringify({ name: 'Published Then Deleted', status: 'PUBLISHED' }),
+  }).then((r) => r.json())
+
+  const beforeDeletePublic = await fetch(`${base}/api/public/services/${pubServiceForDelete.slug}`)
+  check('Published service visible publicly before delete', beforeDeletePublic.status === 200, `got ${beforeDeletePublic.status}`)
+
+  await fetch(`${base}/api/admin/services/${pubServiceForDelete._id}`, { method: 'DELETE', headers: { Cookie: adminCookie } })
+  const afterDeletePublic = await fetch(`${base}/api/public/services/${pubServiceForDelete.slug}`)
+  check('Deleted service is no longer available via the public API', afterDeletePublic.status === 404, `got ${afterDeletePublic.status}`)
+
+  // 8d. Same ADMIN-only delete restriction, applied to Blogs, Case Studies, FAQs
+  const blogToDelete = await fetch(`${base}/api/admin/blogs`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Cookie: adminCookie },
+    body: JSON.stringify({ title: 'Deletable Blog', content: 'Some content.' }),
+  }).then((r) => r.json())
+
+  const deleteBlogAsEditorRes = await fetch(`${base}/api/admin/blogs/${blogToDelete._id}`, {
+    method: 'DELETE',
+    headers: { Cookie: editorCookie },
+  })
+  check('EDITOR deleting a Blog -> 403', deleteBlogAsEditorRes.status === 403, `got ${deleteBlogAsEditorRes.status}`)
+
+  const deleteBlogAsAdminRes = await fetch(`${base}/api/admin/blogs/${blogToDelete._id}`, {
+    method: 'DELETE',
+    headers: { Cookie: adminCookie },
+  })
+  check('ADMIN deleting a Blog -> 204', deleteBlogAsAdminRes.status === 204, `got ${deleteBlogAsAdminRes.status}`)
+
+  const caseStudyToDelete = await fetch(`${base}/api/admin/case-studies`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Cookie: adminCookie },
+    body: JSON.stringify({ title: 'Deletable Case Study' }),
+  }).then((r) => r.json())
+
+  const deleteCaseStudyAsEditorRes = await fetch(`${base}/api/admin/case-studies/${caseStudyToDelete._id}`, {
+    method: 'DELETE',
+    headers: { Cookie: editorCookie },
+  })
+  check('EDITOR deleting a CaseStudy -> 403', deleteCaseStudyAsEditorRes.status === 403, `got ${deleteCaseStudyAsEditorRes.status}`)
+
+  const deleteCaseStudyAsAdminRes = await fetch(`${base}/api/admin/case-studies/${caseStudyToDelete._id}`, {
+    method: 'DELETE',
+    headers: { Cookie: adminCookie },
+  })
+  check('ADMIN deleting a CaseStudy -> 204', deleteCaseStudyAsAdminRes.status === 204, `got ${deleteCaseStudyAsAdminRes.status}`)
+
+  const faqToDelete = await fetch(`${base}/api/admin/faqs`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Cookie: adminCookie },
+    body: JSON.stringify({ question: 'Deletable FAQ?', answer: 'Yes.', page: 'other' }),
+  }).then((r) => r.json())
+
+  const deleteFaqAsEditorRes = await fetch(`${base}/api/admin/faqs/${faqToDelete._id}`, {
+    method: 'DELETE',
+    headers: { Cookie: editorCookie },
+  })
+  check('EDITOR deleting a FAQ -> 403', deleteFaqAsEditorRes.status === 403, `got ${deleteFaqAsEditorRes.status}`)
+
+  const deleteFaqAsAdminRes = await fetch(`${base}/api/admin/faqs/${faqToDelete._id}`, {
+    method: 'DELETE',
+    headers: { Cookie: adminCookie },
+  })
+  check('ADMIN deleting a FAQ -> 204', deleteFaqAsAdminRes.status === 204, `got ${deleteFaqAsAdminRes.status}`)
+
   // 9. Event + CampaignPhase + active-phase time logic (the core scheduling feature)
   const eventRes = await fetch(`${base}/api/admin/events`, {
     method: 'POST',

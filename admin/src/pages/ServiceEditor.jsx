@@ -51,12 +51,25 @@ export function ServiceEditor() {
     try {
       if (isNew) {
         const created = await api.post('/api/admin/services', form)
+        if (!created?._id) {
+          throw new Error(
+            'The service may have been created, but the server response was unexpected. Check the Services list before trying again.',
+          )
+        }
         navigate(`/services/${created._id}`, { replace: true })
       } else {
         await api.put(`/api/admin/services/${id}`, form)
       }
     } catch (err) {
-      setError(err.message)
+      // A timed-out request may still complete on the server after the
+      // browser gives up waiting — never tell the admin it "failed."
+      setError(
+        err.isTimeout
+          ? isNew
+            ? 'The request took longer than expected. The service may still have been created. Please check the Services list before trying again.'
+            : 'The request took longer than expected. Your changes may still have been saved. Please check before trying again.'
+          : err.message,
+      )
     } finally {
       setSaving(false)
     }

@@ -3,6 +3,7 @@ import Blog from '../../models/Blog.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { asyncHandler } from '../../utils/asyncHandler.js'
 import { validate } from '../../middleware/validate.js'
+import { requireRole } from '../../middleware/auth.js'
 import { blogSchema } from '../../utils/validators.js'
 import { createCrudController } from '../../utils/crudFactory.js'
 import { uniqueSlug } from '../../services/slug.js'
@@ -35,7 +36,8 @@ router.put(
   crud.update,
 )
 
-router.delete('/:id', crud.remove)
+// Hard, irreversible delete — ADMIN only, same rule as Services.
+router.delete('/:id', requireRole('ADMIN'), crud.remove)
 
 function transitionHandler(action, status) {
   return asyncHandler(async (req, res) => {
