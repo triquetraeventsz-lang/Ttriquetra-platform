@@ -1,4 +1,4 @@
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+export const API_URL = import.meta.env.VITE_API_URL || 'https://services.triquetraevents.co.in'
 
 // Render's free-tier backend can take a while to wake from a cold start —
 // long enough that, without a bound, a request can sit with no response
